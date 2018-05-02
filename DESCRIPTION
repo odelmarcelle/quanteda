@@ -64,6 +64,7 @@ VignetteBuilder: knitr
 Collate: 
     'RcppExports.R'
     'View.R'
+    'as.weight.R'
     'bootstrap_dfm.R'
     'casechange-functions.R'
     'character-methods.R'
