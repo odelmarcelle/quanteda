@@ -21,7 +21,15 @@ test_that("check_font is working", {
     expect_error(as.weights(c("a*" = 2), toks), "y must be a dfm")
     
     
-    as.weights(c("a*" = 1, "ab*" = 2), mt)
+    w <- as.weights(c("a*" = 1, "ab*" = 2), mt)
+    
+    # ties.method = c("average", "first", "last", "random", "max", "min")
+    sapply(split(w, names(w)), mean)
+    sapply(split(w, names(w)), max)
+    sapply(split(w, names(w)), min)
+    sapply(split(w, names(w)), function(x) unname(head(x, 1)))
+    sapply(split(w, names(w)), function(x) unname(tail(x, 1)))
+    
     as.weights(c("ab*" = 2, "a*" = 1), mt)
     
 })
