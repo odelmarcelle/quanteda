@@ -22,7 +22,7 @@ test_that("message_select works as expected", {
         quanteda:::message_select("remove", 0, 0, 0, 0),
         "removed 0 features$"
     )
-
+    
     expect_message(
         quanteda:::message_select("select", 1000, 1000000, 0, 0),
         "removed 1,000 features"
