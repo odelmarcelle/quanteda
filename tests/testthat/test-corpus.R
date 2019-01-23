@@ -336,7 +336,7 @@ test_that("internal documents fn works", {
 
 test_that("corpus constructor works with tibbles", {
     skip_if_not_installed("tibble")
-    dd <- tibble::data_frame(a=1:3, text=c("Hello", "quanteda", "world"))
+    dd <- tibble::tibble(a=1:3, text=c("Hello", "quanteda", "world"))
     expect_is(
         corpus(dd),
         "corpus"
@@ -528,4 +528,23 @@ test_that("handle data.frame variable renaming when one already exists", {
     names(df)[c(3, 5)] <- c(NA, "")
     crp <- corpus(df, text_field = "thetext", docid_field = "docID")
     expect_equal(names(docvars(crp)), c("V1", "V3", "V3.1"))
+})
+
+test_that("corpus_subset raises error correctly when subset is not logical", {
+    expect_error(
+        corpus_subset(data_corpus_inaugural, subset = (President = "Obama")),
+        "\'subset\' must be logical"
+    )
+    expect_error(
+        data_corpus_inaugural %>% corpus_subset(subset = (President = "Obama")),
+        "\'subset\' must be logical"
+    )
+    expect_warning(
+        corpus_subset(data_corpus_inaugural, President = "Obama"),
+        "President argument is not used"
+    )
+    expect_warning(
+        data_corpus_inaugural %>% corpus_subset(President = "Obama"),
+        "President argument is not used"
+    )
 })

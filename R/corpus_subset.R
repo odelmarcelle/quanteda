@@ -36,6 +36,7 @@ corpus_subset.corpus <- function(x, subset, select, ...) {
     } else {
         e <- substitute(subset)
         r <- eval(e, documents(x), parent.frame())
+        if (!is.logical(r)) stop("'subset' must be logical")
         r & !is.na(r)
     }
     vars <- if (missing(select)) 
