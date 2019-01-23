@@ -56,6 +56,7 @@ test_that("tokens_subset NSE works", {
 })
 
 test_that("tokens_subset works with subset as a tokens object", {
+    skip("This needs clearer explanation and justification before being reactivated")
     toks1 <- tokens(c(d1 = "a b b c", d2 = "b b c d"))
     toks2 <- tokens(c(d1 = "x y z", d2 = "a b c c d", d3 = "a b c", d4 = "x x x"))
     expect_equal(
@@ -66,5 +67,25 @@ test_that("tokens_subset works with subset as a tokens object", {
     expect_equal(
         as.list(tokens_subset(toks1, subset = toks2[c(3,4,1,2), ])),
         list(d3 = character(), d4 = character(), d1 = c("a", "b", "b", "c"), d2 = c("b", "b", "c", "d"))
+    )
+})
+
+test_that("tokens_subset raises error correctly when subset is not logical", {
+    data_tokens_inaugural <- tokens(data_corpus_inaugural)
+    expect_error(
+        tokens_subset(data_tokens_inaugural, subset = (President = "Obama")),
+        "\'subset\' must be logical"
+    )
+    expect_error(
+        data_tokens_inaugural %>% tokens_subset(subset = (President = "Obama")),
+        "\'subset\' must be logical"
+    )
+    expect_warning(
+        tokens_subset(data_tokens_inaugural, President = "Obama"),
+        "President argument is not used"
+    )
+    expect_warning(
+        data_tokens_inaugural %>% tokens_subset(President = "Obama"),
+        "President argument is not used"
     )
 })

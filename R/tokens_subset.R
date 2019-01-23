@@ -8,9 +8,7 @@
 #'
 #' @param x \link{tokens} object to be subsetted
 #' @inheritParams corpus_subset
-#' @param select expression, indicating the docvars to select from the tokens;
-#'   or a \link{tokens} object, in which case the returned tokens will contain the same
-#'   documents in the same order as the original tokens, even if these are empty.
+#' @param select expression, indicating the docvars to keep
 #' @return \link{tokens} object, with a subset of documents (and docvars)
 #'   selected according to arguments
 #' @export
@@ -25,12 +23,6 @@
 #' tokens_subset(toks, grp > 1)
 #' # selecting on a supplied vector
 #' tokens_subset(toks, c(TRUE, FALSE, TRUE, FALSE))
-#'
-#' # selecting on a tokens
-#' toks1 <- tokens(c(d1 = "a b b c", d2 = "b b c d"))
-#' toks2 <- tokens(c(d1 = "x y z", d2 = "a b c c d", d3 = "x x x"))
-#' tokens_subset(toks1, subset = toks2)
-#' tokens_subset(toks1, subset = toks2[c(3,1,2)])
 tokens_subset <- function(x, subset, select, ...) {
     UseMethod("tokens_subset")
 }
@@ -50,6 +42,7 @@ tokens_subset.tokens <- function(x, subset, select, ...) {
     } else {
         e <- substitute(subset)
         r <- eval(e, docvars(x), parent.frame())
+        if (!is.logical(r)) stop("'subset' must be logical")
         if (is.tokens(r)) {
             if (!missing(select)) stop("cannot select docvars if subset is a tokens")
             x <- x[which(docnames(x) %in% docnames(r)), ]
