@@ -9,14 +9,12 @@
 #' To select or subset \emph{features}, see \code{\link{dfm_select}} instead.
 #' @param x \link{dfm} object to be subsetted
 #' @inheritParams corpus_subset
-#' @param select expression, indicating the docvars to select from the dfm; or a
-#'   \link{dfm} object, in which case the returned dfm will contain the same
-#'   documents as the original dfm, even if these are empty.  See Details.
+#' @param select expression, indicating the docvars to keep
 #' @return \link{dfm} object, with a subset of documents (and docvars) selected
 #'   according to arguments
 #' @details When \code{select} is a dfm, then the returned dfm will be equal in
 #'   document dimension and order to the dfm used for selection.  This is the
-#'   document-level version of using \code{\link{dfm_select}} where
+#'   document-level version of using \code{\link{dfm_match}} where
 #'   \code{pattern} is a dfm: that function matches features, while
 #'   \code{dfm_subset} will match documents.
 #' @export
@@ -35,8 +33,8 @@
 #' # selecting on a dfm
 #' dfm1 <- dfm(c(d1 = "a b b c", d2 = "b b c d"))
 #' dfm2 <- dfm(c(d1 = "x y z", d2 = "a b c c d", d3 = "x x x"))
-#' dfm_subset(dfm1, subset = dfm2)
-#' dfm_subset(dfm1, subset = dfm2[c(3,1,2), ])
+#' # dfm_subset(dfm1, subset = dfm2)
+#' # dfm_subset(dfm1, subset = dfm2[c(3,1,2), ])
 dfm_subset <- function(x, subset, select, ...) {
     UseMethod("dfm_subset")
 }
@@ -57,6 +55,7 @@ dfm_subset.dfm <- function(x, subset, select, ...) {
     } else {
         e <- substitute(subset)
         r <- eval(e, docvars(x), parent.frame())
+        if (!is.logical(r)) stop("'subset' must be logical")
         if (is.dfm(r)) {
             if (!missing(select)) stop("cannot select docvars if subset is a dfm")
             x <- x[docnames(x) %in% docnames(r), ]

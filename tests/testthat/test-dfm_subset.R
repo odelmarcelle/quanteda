@@ -56,6 +56,7 @@ test_that("dfm_subset NSE works", {
 })
 
 test_that("dfm_subset works with subset as a dfm", {
+    skip("This needs clearer explanation and justification before being reactivated")
     dfm1 <- dfm(c(d1 = "a b b c", d2 = "b b c d"))
     dfm2 <- dfm(c(d1 = "x y z", d2 = "a b c c d", d3 = "a b c", d4 = "x x x"))
     expect_equal(
@@ -71,3 +72,22 @@ test_that("dfm_subset works with subset as a dfm", {
     )
 })
 
+test_that("dfm_subset raises error correctly when subset is not logical", {
+    data_dfm_inaugural <- dfm(data_corpus_inaugural)
+    expect_error(
+        dfm_subset(data_dfm_inaugural, subset = (President = "Obama")),
+        "\'subset\' must be logical"
+    )
+    expect_error(
+        data_dfm_inaugural %>% dfm_subset(subset = (President = "Obama")),
+        "\'subset\' must be logical"
+    )
+    expect_warning(
+        dfm_subset(data_dfm_inaugural, President = "Obama"),
+        "President argument is not used"
+    )
+    expect_warning(
+        data_dfm_inaugural %>% dfm_subset(President = "Obama"),
+        "President argument is not used"
+    )
+})
