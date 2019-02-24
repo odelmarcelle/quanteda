@@ -8,7 +8,6 @@ test_that("test show.corpus", {
         prints_text('Corpus consisting of 1 document.')
     )
 
-
     testcorpus <- corpus(
         c('The', 'quick', 'brown', 'fox')
     )
