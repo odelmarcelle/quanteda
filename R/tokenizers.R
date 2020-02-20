@@ -72,14 +72,15 @@ preserve_special <- function(x, split_hyphens = TRUE, split_tags = TRUE, verbose
     if (length(sp)) {
         sp <- unique(sp)
         si <- paste0("\u100000", seq_along(sp), "\u100001")
-        names(si) <- sp
         x <- mapply(function(x, y) {
             if (!is.na(y[1])) { # check NA for no match
-                stri_replace_all_fixed(x, y, si[y], vectorize_all = FALSE)
+                stri_replace_all_fixed(x, y, si[fastmatch::fmatch(y, sp)], 
+                                       vectorize_all = FALSE)
             } else {
                 return(x)
             }
         }, x, special)
+        names(si) <- sp
     } else {
         si <- character()
         names(si) <- character()
