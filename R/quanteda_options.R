@@ -157,6 +157,7 @@ get_options_default <- function(){
                  language_stemmer = "english",
                  pattern_hashtag = "#\\w+#?",
                  pattern_username = "@[a-zA-Z0-9_]+",
-                 tokens_block_size = 10000L)
+                 tokens_block_size = 10000L,
+                 tokens_lapply = "base")
     return(opts)
 }

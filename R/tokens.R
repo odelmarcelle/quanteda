@@ -266,16 +266,29 @@ tokens.corpus <- function(x,
 
     if (!remove_separators && !what %in% c("word", "word1", "character"))
         warning("remove_separators is always TRUE for this type")
-
-    # split x into smaller blocks to reduce peak memory consumption
+    
+    print_pid <- FALSE
+    lappy_fn <- base::lapply
+    if (quanteda_options("tokens_lapply") == "future") {
+        tryCatch({
+            lappy_fn <- future.apply::future_lapply
+            print_pid <- TRUE
+        },
+            error = function(e) {
+                stop("future.apply is not installed")
+            }
+        )
+    }
     x <- texts(x)
     x <- split(x, factor(ceiling(seq_along(x) / quanteda_options("tokens_block_size"))))
-    x <- lapply(x, function(y) {
+    x <- lappy_fn(x, function(y) {
         if (verbose)
-            catm(" ...", head(names(y), 1), " to ", tail(names(y), 1), "\n", sep = "")
-            #catm(" ...", head(names(y), 1), " to ", tail(names(y), 1),
-            #     " by process ", Sys.getpid(), "\n", sep = "")
-            
+            if (print_pid) {
+                catm(" ...", head(names(y), 1), " to ", tail(names(y), 1),
+                     " by process ", Sys.getpid(), "\n", sep = "")
+            } else {
+                catm(" ...", head(names(y), 1), " to ", tail(names(y), 1), "\n", sep = "")
+            }    
         y <- normalize_characters(y)
         if (what == "word") {
             y <- preserve_special(y, split_hyphens = split_hyphens,

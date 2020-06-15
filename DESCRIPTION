@@ -79,7 +79,8 @@ Suggests:
     xtable,
     knitr,
     igraph,
-    wordcloud
+    wordcloud,
+    future.apply
 URL: https://quanteda.io
 Encoding: UTF-8
 BugReports: https://github.com/quanteda/quanteda/issues
