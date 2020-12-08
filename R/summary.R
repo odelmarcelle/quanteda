@@ -19,19 +19,13 @@
 #'                docvars = data.frame(party=names(data_char_ukimmig2010)))
 #' summary(corp, showmeta = TRUE) # show the meta-data
 #' sumcorp <- summary(corp) # (quietly) assign the results
-#' sumcorp$Types / sumcorp$Tokens # crude type-token ratio
-summary.corpus <- function(object, n = 100, tolower = FALSE, showmeta = TRUE, ...) {
+summary.corpus <- function(object, ...) {
+    unused_dots(...)
     object <- as.corpus(object)
-    ndoc_all <- ndoc(object)
-    object <- head(object, n)
-    ndoc_show <- ndoc(object)
-    result <- summarize(as.corpus(object), cache = FALSE, tolower = tolower, ...)
-    result <- result[,c("document", "types", "tokens", "sents")]
-    names(result) <- c("Text", "Types", "Tokens", "Sentences")
-    if (showmeta)
-        result <- cbind(result, docvars(object))
-    attr(result, "ndoc_all") <- ndoc_all
-    attr(result, "ndoc_show") <- ndoc_show
+    result <- get_docvars(object, system = TRUE, user = FALSE)
+    result <- result[c("docid_", "segid_")]
+    result[["length_"]] <- nchar(object)
+    colnames(result) <- c("document", "segment", "length")
     class(result) <- c("summary.corpus", "data.frame")
     return(result)
 }
@@ -40,16 +34,9 @@ summary.corpus <- function(object, n = 100, tolower = FALSE, showmeta = TRUE, ..
 #' @rdname corpus-class
 #' @method print summary.corpus
 print.summary.corpus <- function(x, ...) {
-
-    ndoc_all <- attr(x, "ndoc_all")
-    ndoc_show <- attr(x, "ndoc_show")
-
-    cat("Corpus consisting of ", ndoc_all, " document", if (ndoc_all > 1) "s" else "", sep = "")
-    if (!is.null(ndoc_show))
-        cat(", showing ", ndoc_show, " document", if (ndoc_show > 1) "s" else "", sep = "")
-    cat(":\n\n")
-    print.data.frame(x, row.names = FALSE)
+    cat("Corpus consisting of ", nrow(x), " document", if (nrow(x) > 1) "s" else "", sep = "")
     cat("\n")
+    print(summary(x))
 }
 
 #' @noRd
@@ -59,54 +46,4 @@ print.summary.corpus <- function(x, ...) {
     class(x) <- "data.frame"
     row.names(x) <- NULL
     NextMethod("[")
-}
-
-summarize <- function(x, cache = TRUE, ...) {
-
-    if (cache) {
-        result <- get_cache(x, "summary", ...)
-        if (!is.null(result))
-            return(result)
-    } else {
-        clear_cache(x, "summary")
-    }
-
-    patterns <- removals_regex(punct = TRUE, symbols = TRUE,
-                               numbers = TRUE, url = TRUE)
-    patterns[["tag"]] <-
-        list("username" = paste0("^", quanteda_options("pattern_username"), "$"),
-             "hashtag" = paste0("^", quanteda_options("pattern_hashtag"), "$"))
-    patterns[["emoji"]] <- "^\\p{Emoji_Presentation}+$"
-    dict <- dictionary(patterns)
-
-    y <- dfm(x, ...)
-    temp <- convert(
-        quanteda::dfm_lookup(y, dictionary = dict, valuetype = "regex", levels = 1),
-        "data.frame",
-        docid_field = "document"
-    )
-    result <- data.frame(
-        "document" = docnames(y),
-        "chars" = NA,
-        "sents" = NA,
-        "tokens" = ntoken(y),
-        "types" = ntype(y),
-        "puncts" = as.integer(temp$punct),
-        "numbers" = as.integer(temp$numbers),
-        "symbols" = as.integer(temp$symbols),
-        "urls" = as.integer(temp$url),
-        "tags" = as.integer(temp$tag),
-        "emojis" = as.integer(temp$emoji),
-        row.names = seq_len(ndoc(y)),
-        stringsAsFactors = FALSE
-    )
-
-    if (is.corpus(x)) {
-        result$chars <- nchar(x)
-        result$sents <- ntoken(tokens(x, what = "sentence"))
-    }
-
-    if (cache)
-        set_cache(x, "summary", result, ...)
-    return(result)
 }
