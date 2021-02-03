@@ -279,7 +279,7 @@ test_that("group_docvar works", {
     dat <- data.frame("docname_" = c("A", "B", "C", "D"),
                        "docid_" = factor(c("text1", "text2", "text2", "text3")),
                        "segid_" = c(1L, 1L, 1L, 1L),
-                       vec1 = c(1, 3, 3, 6),
+                       vec1 = c(1, 6, 6, 3),
                        vec2 = factor(c("a", "b", "b", "c"), 
                                      levels = c("a", "b", "c", "d")),
                        stringsAsFactors = FALSE)
@@ -290,7 +290,7 @@ test_that("group_docvar works", {
                  data.frame("docname_" = c("1", "2", "3"),
                             "docid_" = factor(c("1", "2", "3")),
                             "segid_" = c(1L, 1L, 1L),
-                            vec1 = c(1, 3, 6),
+                            vec1 = c(1, 6, 3),
                             vec2 = factor(c("a", "b", "c"),
                                           levels = c("a", "b", "c", "d")),
                             stringsAsFactors = FALSE))
@@ -311,12 +311,12 @@ test_that("group_docvar works", {
     expect_identical(dat_fill3$vec2, factor(rep(c("a", "b", "c", "d"), each = 3)))
     
     corp <- corpus(c("a a c d", "s i k e", "k a i e", "z o p"),
-                   docvars = data.frame(vec1 = c(1, 3, 3, 6),
+                   docvars = data.frame(vec1 = c(9, 4, 4, 6),
                                         vec2 = c("a", "b", "b", "c"),
                                         stringsAsFactors = FALSE))
     dfmat <- dfm(corp)
     expect_equal(docvars(dfm_group(dfmat, c(1, 2, 2, 3))),
-                 data.frame(data.frame(vec1 = c(1, 3, 6),
+                 data.frame(data.frame(vec1 = c(9, 4, 6),
                                        vec2 = c("a", "b", "c"),
                                        stringsAsFactors = FALSE)))
 })
