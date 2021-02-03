@@ -133,10 +133,12 @@ group_docvars <- function(x, groups = NULL, fill = FALSE) {
         return(x)
 
     # check if members of docvars
+    fill_vars <- TRUE
     if (is.character(groups) && all(groups %in% names(x))) {
         groups <- x[groups]
     } else {
         groups <- as.data.frame(groups)
+        fill_vars <- FALSE
     }
     if (nrow(groups) != nrow(x))
         stop(message_error("groups_mismatch"))
@@ -162,19 +164,23 @@ group_docvars <- function(x, groups = NULL, fill = FALSE) {
         }
     }
     
-    # duplicate rows
+    # select rows
     result <- x[match(levels(group), group), l, drop = FALSE]
     result[c("docname_", "docid_", "segid_")] <- make_docvars(length(levels(group)), levels(group), TRUE)
-    index <- do.call(expand.grid, lapply(groups, levels))
-    temp <- list()
-    for (m in names(index)) {
-        if (is.factor(x[[m]])) {
-            temp[[m]] <- index[[m]]
-        } else {
-            temp[[m]] <- unique(x[[m]])[index[[m]]]
+    
+    # fill values
+    if (fill_vars) {
+        index <- do.call(expand.grid, lapply(groups, levels))
+        temp <- list()
+        for (m in names(index)) {
+            if (is.factor(x[[m]])) {
+                temp[[m]] <- index[[m]]
+            } else {
+                temp[[m]] <- sort(unique(x[[m]]))[index[[m]]]
+            }
         }
+        result[names(index)] <- temp
     }
-    result[names(index)] <- temp
     rownames(result) <- NULL
     return(result)
 }
