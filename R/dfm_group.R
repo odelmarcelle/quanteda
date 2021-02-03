@@ -67,16 +67,24 @@ dfm_group.dfm <- function(x, groups = NULL, fill = FALSE, force = FALSE) {
         }
     }
     if (!nfeat(x) || !ndoc(x)) return(x)
-    if (!is.factor(groups))
-        groups <- generate_groups(x, groups)
-    if (!fill)
-        groups <- droplevels(groups)
-
-    # remove NA groups
-    x <- dfm_subset(x, !is.na(groups))
-    groups <- groups[!is.na(groups)]
     
-    group_dfm(x, documents = groups, fill = fill)
+    group <- generate_groups(x, groups, fill = fill)
+    
+    # remove NA groups
+    x <- dfm_subset(x, !is.na(group))
+    group <- group[!is.na(group)]
+    temp <- group_matrix(x, documents = group, fill = fill)
+    
+    attrs[["docvars"]] <- select_docvars(attrs[["docvars"]], user = TRUE, system = TRUE)
+    attrs[["docvars"]] <- group_docvars(attrs[["docvars"]], groups, fill = fill)
+    
+    build_dfm(
+        temp,
+        features = colnames(temp),
+        unit = "documents",
+        docvars = attrs[["docvars"]], 
+        meta = attrs[["meta"]]
+    )
 }
 
 
@@ -88,16 +96,18 @@ dfm_group.dfm <- function(x, groups = NULL, fill = FALSE, force = FALSE) {
 #' @param groups names of docvars or vector that can be coerced to a factor
 #' @return a factor
 #' @keywords internal
-generate_groups <- function(x, groups, drop = FALSE) {
-    drop <- check_logical(drop)
+generate_groups <- function(x, groups, fill = FALSE) {
+    fill <- check_logical(fill)
     docvar <- get_docvars(x, user = TRUE, system = TRUE)
     if (is.character(groups) && all(groups %in% names(docvar))) {
         groups <- interaction(docvar[groups], drop = FALSE)
-    } else {
-        if (length(groups) != ndoc(x))
-            stop("groups must name docvars or provide data matching the documents in x")
+    } else if (!is.factor(groups)) {
         groups <- factor(groups)
     }
+    if (!fill)
+        groups <- droplevels(groups)
+    if (length(groups) != ndoc(x))
+        stop(message_error("groups_mismatch"))
     return(groups)
 }
 
@@ -158,4 +168,40 @@ group_dfm <- function(x, documents = NULL, features = NULL, fill = FALSE,
         docvars = group_docvars(attrs[["docvars"]], documents),
         meta = attrs[["meta"]]
     )
+}
+
+group_matrix <- function(x, documents = NULL, features = NULL, fill = FALSE) {
+    
+    if (!length(features) && !length(documents))
+        return(x)
+    attrs <- attributes(x)
+    x <- as(x, "dgTMatrix")
+    if (is.null(features)) {
+        featname <- x@Dimnames[[2]]
+        j <- x@j + 1L
+    } else {
+        if (!is.factor(features))
+            features <- factor(features, levels = unique(features))
+        if (!fill)
+            features <- droplevels(features)
+        featname <- levels(features)
+        j <- as.integer(features)
+        j <- j[x@j + 1L]
+    }
+    if (is.null(documents)) {
+        docname <- x@Dimnames[[1]]
+        i <- x@i + 1L
+    } else {
+        if (!is.factor(documents))
+            documents <- factor(documents, levels = unique(documents))
+        if (!fill)
+            documents <- droplevels(documents)
+        docname <- levels(documents)
+        i <- as.integer(documents)
+        i <- i[x@i + 1L]
+    }
+    sparseMatrix(i = i, j = j, x = x@x,
+                 dims = c(length(docname), length(featname)),
+                 dimnames = list(docname, featname))
+
 }

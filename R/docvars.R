@@ -14,14 +14,14 @@
                 value <- as.data.frame(value, stringsAsFactors = FALSE)
             if (is.data.frame(value)) {
                 if (nrow(value) != nrow(x))
-                    stop(message_error("docvar_mismatch"))
+                    stop(message_error("docvars_mismatch"))
                 if (!is.character(names(value)) || length(names(value)) != ncol(value) ||
                     any(is.na(names(value)))) {
-                    stop(message_error("docvar_nocolname"), call. = FALSE)
+                    stop(message_error("docvars_nocolname"), call. = FALSE)
                 }
                 x <- cbind(x[flag], value)
             } else {
-                stop(message_error("docvar_nofield"), call. = FALSE)
+                stop(message_error("docvars_nofield"), call. = FALSE)
             }
         }
     } else {
@@ -127,18 +127,54 @@ reshape_docvars <- function(x, i = NULL) {
 }
 
 # Reshape docvars keeping variables that have the same values within groups
-group_docvars <- function(x, group = NULL) {
-    if (is.null(group))
+group_docvars <- function(x, groups = NULL, fill = FALSE) {
+    
+    if (is.null(groups))
         return(x)
+
+    # check if members of docvars
+    if (is.character(groups) && all(groups %in% names(x))) {
+        groups <- x[groups]
+    } else {
+        groups <- as.data.frame(groups)
+    }
+    if (nrow(groups) != nrow(x))
+        stop(message_error("groups_mismatch"))
+    
+    # convert to factor
+    groups <- lapply(groups, function(x) {
+        if (!is.factor(x))
+            x <- factor(x)
+        if (!fill)
+            x <- droplevels(x)
+        return(x)
+        })
+    
+    group <- interaction(groups, drop = !fill)
+    x <- x[!is.na(group),]
+    group <- group[!is.na(group)]
+    
+    # select grouped variables
     l <- rep(FALSE, length(x))
     for (i in seq_along(l)) {
         if (is_system(names(x)[i]) || is_grouped(x[[i]], group)) {
             l[i] <- TRUE
         }
     }
-    temp <- make_docvars(length(levels(group)), levels(group), TRUE)
+    
+    # duplicate rows
     result <- x[match(levels(group), group), l, drop = FALSE]
-    result[c("docname_", "docid_", "segid_")] <- temp
+    result[c("docname_", "docid_", "segid_")] <- make_docvars(length(levels(group)), levels(group), TRUE)
+    index <- do.call(expand.grid, lapply(groups, levels))
+    temp <- list()
+    for (m in names(index)) {
+        if (is.factor(x[[m]])) {
+            temp[[m]] <- index[[m]]
+        } else {
+            temp[[m]] <- unique(x[[m]])[index[[m]]]
+        }
+    }
+    result[names(index)] <- temp
     rownames(result) <- NULL
     return(result)
 }

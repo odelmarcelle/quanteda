@@ -31,12 +31,12 @@ test_that("dfm_group works with empty documents", {
 })
 
 test_that("dfm_group works with docvars", {
-    mycorpus <- corpus(c("a a b", "a b c c", "a c d d", "a c c d"),
+    corp <- corpus(c("a a b", "a b c c", "a c d d", "a c c d"),
                        docvars = data.frame(grp = c(1, 1, 2, 2)))
-    mydfm <- dfm(mycorpus)
+    dfmat <- dfm(corp)
     expect_equal(
-        colSums(dfm_group(mydfm, groups = "grp")),
-        colSums(mydfm)
+        colSums(dfm_group(dfmat, groups = "grp")),
+        colSums(dfmat)
     )
 })
 
@@ -122,8 +122,8 @@ test_that("test dfm_group with non-factor grouping variable, with fill", {
                dimnames = list(docs = c("A", "C", "D"), features = letters[1:4]))
     )
     expect_equal(
-        dfm_group(dfmt, groups = grp, fill = FALSE),
-        dfm_group(dfmt, groups = "grp", fill = FALSE)
+        as.matrix(dfm_group(dfmt, groups = grp, fill = FALSE)),
+        as.matrix(dfm_group(dfmt, groups = "grp", fill = FALSE))
     )
 })
     
@@ -134,15 +134,15 @@ test_that("test dfm_group with wrongly dimensioned groups variables", {
     dfmt <- dfm(corp)
     expect_error(
         dfm_group(dfmt, groups = c(1, 1, 2, 3, 3), fill = FALSE),
-        "groups must name docvars or provide data matching the documents in x"
+        "groups must be the same length as documents"
     )
     expect_error(
         dfm_group(dfmt, groups = c(1, 1, 2, 3, 3), fill = TRUE),
-        "groups must name docvars or provide data matching the documents in x"
+        "groups must be the same length as documents"
     )
     expect_error(
         dfm_group(dfmt, groups = c(1, 1, 2, 3, 4), fill = TRUE),
-        "groups must name docvars or provide data matching the documents in x"
+        "groups must be the same length as documents"
     )
 })
 
@@ -183,6 +183,29 @@ test_that("test dfm_group keeps group-level variables", {
                    var1 = c(2, NA, 2, 1),
                    var3 = c("y", NA, NA, "x"),
                    var5 = as.Date(c("2015-03-01", NA, "2012-12-15", "2018-01-01")),
+                   stringsAsFactors = FALSE)
+    )
+    
+    expect_equal(
+        dfm_group(dfmt, "var1", fill = TRUE)@docvars,
+        data.frame("docname_" = c("1", "2"),
+                   "docid_" = factor(c("1", "2"), 
+                                     levels = c("1", "2")),
+                   "segid_" = c(1L, 1L),
+                   var1 = c(1, 2),
+                   stringsAsFactors = FALSE)
+    )
+    
+    expect_equal(
+        dfm_group(dfmt, c("var1", "var3"), fill = TRUE)@docvars,
+        data.frame("docname_" = c("1.x", "2.x", "1.y", "2.y"),
+                   "docid_" = factor(c("1.x", "2.x", "1.y", "2.y"), 
+                                     levels = c("1.x", "2.x", "1.y", "2.y")),
+                   "segid_" = c(1L, 1L, 1L, 1L),
+                   grp = c("D", NA, NA, "A"),
+                   var1 = c(1, 2, 1, 2),
+                   var3 = c("x", "x", "y", "y"),
+                   var5 = as.Date(c("2018-01-01", NA, NA, "2015-03-01")),
                    stringsAsFactors = FALSE)
     )
 })
@@ -252,28 +275,47 @@ test_that("force argument works as expected (#1545)", {
     expect_is(dfm_group(dfmat_tfidf, groups = "grp", force = TRUE), "dfm")
 })
 
-test_that("group_docvar drops list column (#1553)", {
-    data <- data.frame("docname_" = c("A", "B", "C", "D"),
+test_that("group_docvar works", {
+    dat <- data.frame("docname_" = c("A", "B", "C", "D"),
                        "docid_" = factor(c("text1", "text2", "text2", "text3")),
                        "segid_" = c(1L, 1L, 1L, 1L),
                        vec1 = c(1, 3, 3, 6),
-                       vec2 = c("a", "b", "b", "c"),
+                       vec2 = factor(c("a", "b", "b", "c"), 
+                                     levels = c("a", "b", "c", "d")),
                        stringsAsFactors = FALSE)
-    data$lis <- list(1:3, -5, 3:4, 1)
-    expect_equal(quanteda:::group_docvars(data, factor(c(1, 2, 2, 3))),
+    
+    # drop list column (#1553)
+    dat$lis <- list(1:3, -5, 3:4, 1)
+    expect_equal(quanteda:::group_docvars(dat, factor(c(1, 2, 2, 3))),
                  data.frame("docname_" = c("1", "2", "3"),
                             "docid_" = factor(c("1", "2", "3")),
                             "segid_" = c(1L, 1L, 1L),
                             vec1 = c(1, 3, 6),
-                            vec2 = c("a", "b", "c"),
+                            vec2 = factor(c("a", "b", "c"),
+                                          levels = c("a", "b", "c", "d")),
                             stringsAsFactors = FALSE))
+    
+    # fill values
+    dat_fill1 <- quanteda:::group_docvars(dat, dat$vec2, fill = TRUE)
+    expect_identical(dat_fill1$vec2, 
+                     factor(c("a", "b", "c", NA),
+                            levels = c("a", "b", "c", "d")))
+    
+    dat_fill2 <- quanteda:::group_docvars(dat, "vec2", fill = TRUE)
+    expect_identical(dat_fill2$vec2, 
+                     factor(c("a", "b", "c", "d"),
+                            levels = c("a", "b", "c", "d")))
+    
+    dat_fill3 <- quanteda:::group_docvars(dat, c("vec1", "vec2"), fill = TRUE)
+    expect_identical(dat_fill3$vec1, rep(c(1, 3, 6), 4))
+    expect_identical(dat_fill3$vec2, factor(rep(c("a", "b", "c", "d"), each = 3)))
     
     corp <- corpus(c("a a c d", "s i k e", "k a i e", "z o p"),
                    docvars = data.frame(vec1 = c(1, 3, 3, 6),
                                         vec2 = c("a", "b", "b", "c"),
                                         stringsAsFactors = FALSE))
-    mt <- dfm(corp)
-    expect_equal(docvars(dfm_group(mt, c(1, 2, 2, 3))),
+    dfmat <- dfm(corp)
+    expect_equal(docvars(dfm_group(dfmat, c(1, 2, 2, 3))),
                  data.frame(data.frame(vec1 = c(1, 3, 6),
                                        vec2 = c("a", "b", "c"),
                                        stringsAsFactors = FALSE)))

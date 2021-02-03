@@ -141,12 +141,13 @@ message_error <- function(key = NULL) {
              "fcm_empty" = "fcm must have at least one non-zero value",
              "fcm_context" = "fcm must be created with a document context",
              "matrix_mismatch" = "matrix must have the same rownames and colnames",
-             "docnames_mismatch" = "docnames must the the same length as x",
-             "ndoc_mismatch" = "documents must the the same length as x",
+             "docnames_mismatch" = "docnames must be the the same length as x",
+             "ndoc_mismatch" = "documents must be the the same length as x",
              "docvars_mismatch" = "data.frame must have the same number of rows as documents",
              "docvars_invalid" = "document variables cannot begin with the underscore",
-             "docvar_nofield" = "you must supply field name(s)",
-             "docvar_nocolname" = "data.frame must have column names")
+             "docvars_nofield" = "you must supply field name(s)",
+             "docvars_nocolname" = "data.frame must have column names",
+             "groups_mismatch" = "groups must be the same length as documents")
     if (is.null(key) || !key %in% names(msg)) {
         return("")
     }
