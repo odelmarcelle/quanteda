@@ -170,6 +170,7 @@ group_docvars <- function(x, groups = NULL, fill = FALSE) {
     
     # fill values
     if (fill_vars) {
+        # NOTE: expand.grid may behave differently from interaction
         index <- do.call(expand.grid, lapply(groups, levels))
         temp <- list()
         for (m in names(index)) {
