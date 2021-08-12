@@ -85,7 +85,7 @@ select_docvars <- function(x, field = NULL, user = TRUE, system = FALSE, drop = 
 #'   names are treated as segments from the same document and given serial number.
 #' @param drop_docid if `TRUE`, drop unused names of documents.
 #' @keywords internal
-make_docvars <- function(n, docname = NULL, unique = TRUE, drop_docid = TRUE) {
+make_docvars <- function(n, docname = NULL, segid = NULL, unique = TRUE, drop_docid = TRUE) {
     
     stopifnot(is.integer(n))
     if (is.null(docname)) {
@@ -108,12 +108,18 @@ make_docvars <- function(n, docname = NULL, unique = TRUE, drop_docid = TRUE) {
                              "segid_" = integer(),
                               stringsAsFactors = FALSE)
     } else {
-        if (unique && any(duplicated(docname))) {
-            segid <- stats::ave(docname == docname, docname, FUN = cumsum)
-            docid <- paste0(docname, ".", segid)
+        if (is.null(segid)) {
+            if (unique && any(duplicated(docname))) {
+                segid <- stats::ave(docname == docname, docname, FUN = cumsum)
+                docid <- paste0(docname, ".", segid)
+            } else {
+                segid <- rep(1L, n)
+                docid <- as.character(docname)
+            }
         } else {
-            segid <- rep(1L, n)
-            docid <- as.character(docname)
+            stopifnot(n == length(segid))
+            stopifnot(is.integer(segid))
+            docid <- paste0(docname, ".", segid)
         }
         result <- data.frame("docname_" = docid,
                              "docid_" = docname,
@@ -129,10 +135,14 @@ make_docvars <- function(n, docname = NULL, unique = TRUE, drop_docid = TRUE) {
 #' @param i numeric or logical vector for subsetting/duplicating rows
 #' @inheritParams make_docvars
 #' @keywords internal
-reshape_docvars <- function(x, i = NULL, drop_docid = TRUE) {
+reshape_docvars <- function(x, i = NULL, drop_docid = TRUE, keep_segid = TRUE) {
     if (is.null(i)) return(x)
     x <- x[i, , drop = FALSE]
-    temp <- make_docvars(nrow(x), x[["docid_"]], unique = TRUE, drop_docid)
+    if (keep_segid) {
+        temp <- make_docvars(nrow(x), x[["docid_"]], x[["segid_"]], TRUE, drop_docid)
+    } else {
+        temp <- make_docvars(nrow(x), x[["docid_"]], NULL, TRUE, drop_docid)
+    }
     x[c("docname_", "docid_", "segid_")] <- temp
     rownames(x) <- NULL
     return(x)

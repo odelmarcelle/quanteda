@@ -137,7 +137,7 @@ corpus_segment.corpus <- function(x, pattern = "##*",
     } else {
         docvars <- select_docvars(attrs[["docvars"]], user = FALSE, system = TRUE)
     }
-    docvars <- reshape_docvars(docvars, temp[["docnum"]], drop_docid = FALSE)
+    docvars <- reshape_docvars(docvars, temp[["docnum"]], drop_docid = FALSE, keep_segid = FALSE)
     if (extract_pattern)
         docvars[["pattern"]] <- temp[["pattern"]]
 

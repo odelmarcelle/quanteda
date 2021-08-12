@@ -76,11 +76,11 @@ test_that("docnames are alwyas unique", {
     expect_false(any(duplicated((attr(corp1, "names")))))
 
     corp2 <- corp[c(5, 5)]
-    expect_false(any(duplicated((docnames(corp2)))))
+    expect_true(any(duplicated((docnames(corp2)))))
     expect_identical(docnames(corp2), attr(corp2, "names"))
 
     corp3 <- corp[c("1805-Jefferson", "1805-Jefferson")]
-    expect_false(any(duplicated((docnames(corp3)))))
+    expect_true(any(duplicated((docnames(corp3)))))
     expect_identical(docnames(corp3), attr(corp3, "names"))
 
     toks1 <- toks
@@ -89,11 +89,11 @@ test_that("docnames are alwyas unique", {
     expect_identical(docnames(toks1), attr(toks1, "names"))
 
     toks2 <- toks[c(5, 5)]
-    expect_false(any(duplicated((docnames(toks2)))))
+    expect_true(any(duplicated((docnames(toks2)))))
     expect_identical(docnames(toks2), attr(toks2, "names"))
 
     toks3 <- toks[c("1805-Jefferson", "1805-Jefferson")]
-    expect_false(any(duplicated((docnames(toks3)))))
+    expect_true(any(duplicated((docnames(toks3)))))
     expect_identical(docnames(toks3), attr(toks3, "names"))
 
     dfmat1 <- dfmat
@@ -102,10 +102,33 @@ test_that("docnames are alwyas unique", {
     expect_identical(docnames(dfmat1), dfmat1@Dimnames[["docs"]])
 
     dfmat2 <- dfmat[c(5, 5), ]
-    expect_false(any(duplicated((docnames(dfmat2)))))
+    expect_true(any(duplicated((docnames(dfmat2)))))
     expect_identical(docnames(dfmat2), dfmat2@Dimnames[["docs"]])
 
     dfmat3 <- dfmat[c("1805-Jefferson", "1805-Jefferson"), ]
-    expect_false(any(duplicated((docnames(dfmat3)))))
+    expect_true(any(duplicated((docnames(dfmat3)))))
     expect_identical(docnames(dfmat3), dfmat3@Dimnames[["docs"]])
+})
+
+
+test_that("docnames are the same after subsetting (#2127)", {
+    corp <- corpus_reshape(data_corpus_inaugural)
+    toks <- tokens(corp)
+    dfmat <- dfm(toks)
+    docname <- c("1789-Washington.2", "1789-Washington.3")
+    
+    expect_identical(docnames(corp[docname]), docname)
+    expect_identical(docnames(corp[docname[1]]), docname[1])
+    expect_identical(docnames(corp[2:3]), docname)
+    expect_identical(docnames(corp[2]), docname[1])
+    
+    expect_identical(docnames(toks[docname]), docname)
+    expect_identical(docnames(toks[docname[1]]), docname[1])
+    expect_identical(docnames(toks[2:3]), docname)
+    expect_identical(docnames(toks[2]), docname[1])
+    
+    expect_identical(docnames(dfmat[docname,]), docname)
+    expect_identical(docnames(dfmat[docname[1],]), docname[1])
+    expect_identical(docnames(dfmat[2:3,]), docname)
+    expect_identical(docnames(dfmat[2,]), docname[1])
 })

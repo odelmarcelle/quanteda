@@ -61,12 +61,12 @@ corpus_reshape.corpus <- function(x, to = c("sentences", "paragraphs", "document
         } else {
             temp[["text"]] <- unlist_character(lapply(temp[["text"]], paste0, collapse = "\n\n"))
         }
-        attrs[["docvars"]] <- reshape_docvars(attrs[["docvars"]], !duplicated(docnum))
+        attrs[["docvars"]] <- reshape_docvars(attrs[["docvars"]], !duplicated(docnum), keep_segid = FALSE)
         unit <- "documents"
     } else {
         temp <- segment_texts(x,  pattern = NULL, extract_pattern = FALSE,
                               omit_empty = FALSE, what = to, ...)
-        attrs[["docvars"]] <- reshape_docvars(attrs[["docvars"]], temp[["docnum"]])
+        attrs[["docvars"]] <- reshape_docvars(attrs[["docvars"]], temp[["docnum"]], keep_segid = FALSE)
         unit <- to
     }
     build_corpus(

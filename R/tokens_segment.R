@@ -76,7 +76,7 @@ tokens_segment.tokens <- function(x, pattern,
     } else {
         result <- qatd_cpp_tokens_segment(x, type, ids, extract_pattern, 2)
     }
-    attrs[["docvars"]] <- reshape_docvars(attrs[["docvars"]], attr(result, "docnum"))
+    attrs[["docvars"]] <- reshape_docvars(attrs[["docvars"]], attr(result, "docnum"), drop_docid = FALSE, keep_segid = FALSE)
     field_object(attrs, "unit") <- "segments"
     if (extract_pattern)
         attrs[["docvars"]][["pattern"]] <- attr(result, "pattern")
