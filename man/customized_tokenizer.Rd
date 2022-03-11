@@ -15,10 +15,10 @@ customized_tokenizer(
 \item{base}{the base rules for the ICU RBBI}
 
 \item{split_hyphens}{ignored if \code{base = "word"}. Define the split (or not) of
-hyphenated words in the customized tokenizer.}
+hyphenated words in the customized tokenizer. Override the behavior of \code{tokens()}.}
 
 \item{split_tags}{ignored if \code{base = "word"}. Define the split (or not) of
-hashtags (#) and usernames (@).}
+hashtags (#) and usernames (@). Override the behavior of \code{tokens()}.}
 
 \item{custom_rules}{a character of length one specifying rules to be appended
 at the end of the base rules.}
